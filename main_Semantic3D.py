@@ -13,7 +13,7 @@ import pickle, argparse, os
 class Semantic3D:
     def __init__(self):
         self.name = 'Semantic3D'
-        self.path = '/data/semantic3d'
+        self.path = './data/semantic3d'
         self.label_to_names = {0: 'unlabeled',
                                1: 'man-made terrain',
                                2: 'natural terrain',
