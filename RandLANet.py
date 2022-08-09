@@ -49,13 +49,17 @@ class Network:
             self.Log_file = open('log_train_' + dataset.name + str(dataset.val_split) + '.txt', 'a')
 
         with tf.variable_scope('layers'):
-            self.logits = self.inference(self.inputs, self.is_training)
+            # 由于 self.inference 定义的返回值由原来的 f_out 变为 f_out=[f_out1, f_out2, f_out3, f_out4, f_out5]，
+            # 因此 self.logits 也改为 self.logitss，即多个特征图对应的预测标签列表，实际上是 f_out1,...,f_out5 里 5 个特征图 f1,1, ..., f5,5 对应的预测标签列表。
+            self.logitss = self.inference(self.inputs, self.is_training)
 
         #####################################################################
         # Ignore the invalid point (unlabeled) when calculating the loss #
         #####################################################################
         with tf.variable_scope('loss'):
-            self.logits = tf.reshape(self.logits, [-1, config.num_classes])
+        # with tf.variable_scope('sub_loss1'):
+            # 取出 self.logitss 中利用 f_out1 预测出来的标签来计算子损失 sub_loss1
+            self.logits = tf.reshape(self.logitss[0], [-1, config.num_classes])
             self.labels = tf.reshape(self.labels, [-1])
 
             # Boolean mask of points that should be ignored
@@ -75,7 +79,130 @@ class Network:
                 reducing_list = tf.concat([reducing_list[:ign_label], inserted_value, reducing_list[ign_label:]], 0)
             valid_labels = tf.gather(reducing_list, valid_labels_init)
 
-            self.loss = self.get_loss(valid_logits, valid_labels, self.class_weights)
+            self.loss1 = self.get_loss(valid_logits, valid_labels, self.class_weights)
+
+        # with tf.variable_scope('sub_loss2'):
+            # 取出 self.logitss 中利用 f_out2 预测出来的标签来计算子损失 sub_loss2
+            self.logits = tf.reshape(self.logitss[1], [-1, config.num_classes])
+            self.labels = tf.reshape(self.labels, [-1])
+
+            # Boolean mask of points that should be ignored
+            ignored_bool = tf.zeros_like(self.labels, dtype=tf.bool)
+            for ign_label in self.config.ignored_label_inds:
+                ignored_bool = tf.logical_or(ignored_bool, tf.equal(self.labels, ign_label))
+
+            # Collect logits and labels that are not ignored
+            valid_idx = tf.squeeze(tf.where(tf.logical_not(ignored_bool)))
+            valid_logits = tf.gather(self.logits, valid_idx, axis=0)
+            valid_labels_init = tf.gather(self.labels, valid_idx, axis=0)
+
+            # Reduce label values in the range of logit shape
+            reducing_list = tf.range(self.config.num_classes, dtype=tf.int32)
+            inserted_value = tf.zeros((1,), dtype=tf.int32)
+            for ign_label in self.config.ignored_label_inds:
+                reducing_list = tf.concat([reducing_list[:ign_label], inserted_value, reducing_list[ign_label:]], 0)
+            valid_labels = tf.gather(reducing_list, valid_labels_init)
+
+            self.loss2 = self.get_loss(valid_logits, valid_labels, self.class_weights)
+
+        # with tf.variable_scope('sub_loss3'):
+            # 取出 self.logitss 中利用 f_out3 预测出来的标签来计算子损失 sub_loss3
+            self.logits = tf.reshape(self.logitss[2], [-1, config.num_classes])
+            self.labels = tf.reshape(self.labels, [-1])
+
+            # Boolean mask of points that should be ignored
+            ignored_bool = tf.zeros_like(self.labels, dtype=tf.bool)
+            for ign_label in self.config.ignored_label_inds:
+                ignored_bool = tf.logical_or(ignored_bool, tf.equal(self.labels, ign_label))
+
+            # Collect logits and labels that are not ignored
+            valid_idx = tf.squeeze(tf.where(tf.logical_not(ignored_bool)))
+            valid_logits = tf.gather(self.logits, valid_idx, axis=0)
+            valid_labels_init = tf.gather(self.labels, valid_idx, axis=0)
+
+            # Reduce label values in the range of logit shape
+            reducing_list = tf.range(self.config.num_classes, dtype=tf.int32)
+            inserted_value = tf.zeros((1,), dtype=tf.int32)
+            for ign_label in self.config.ignored_label_inds:
+                reducing_list = tf.concat([reducing_list[:ign_label], inserted_value, reducing_list[ign_label:]], 0)
+            valid_labels = tf.gather(reducing_list, valid_labels_init)
+
+            self.loss3 = self.get_loss(valid_logits, valid_labels, self.class_weights)
+
+        # with tf.variable_scope('sub_loss4'):
+            # 取出 self.logitss 中利用 f_out4 预测出来的标签来计算子损失 sub_loss4
+            self.logits = tf.reshape(self.logitss[3], [-1, config.num_classes])
+            self.labels = tf.reshape(self.labels, [-1])
+
+            # Boolean mask of points that should be ignored
+            ignored_bool = tf.zeros_like(self.labels, dtype=tf.bool)
+            for ign_label in self.config.ignored_label_inds:
+                ignored_bool = tf.logical_or(ignored_bool, tf.equal(self.labels, ign_label))
+
+            # Collect logits and labels that are not ignored
+            valid_idx = tf.squeeze(tf.where(tf.logical_not(ignored_bool)))
+            valid_logits = tf.gather(self.logits, valid_idx, axis=0)
+            valid_labels_init = tf.gather(self.labels, valid_idx, axis=0)
+
+            # Reduce label values in the range of logit shape
+            reducing_list = tf.range(self.config.num_classes, dtype=tf.int32)
+            inserted_value = tf.zeros((1,), dtype=tf.int32)
+            for ign_label in self.config.ignored_label_inds:
+                reducing_list = tf.concat([reducing_list[:ign_label], inserted_value, reducing_list[ign_label:]], 0)
+            valid_labels = tf.gather(reducing_list, valid_labels_init)
+
+            self.loss4 = self.get_loss(valid_logits, valid_labels, self.class_weights)
+
+        # with tf.variable_scope('sub_loss5'):
+            # 取出 self.logitss 中利用 f_out5 预测出来的标签来计算子损失 sub_loss5
+            self.logits = tf.reshape(self.logitss[4], [-1, config.num_classes])
+            self.labels = tf.reshape(self.labels, [-1])
+
+            # Boolean mask of points that should be ignored
+            ignored_bool = tf.zeros_like(self.labels, dtype=tf.bool)
+            for ign_label in self.config.ignored_label_inds:
+                ignored_bool = tf.logical_or(ignored_bool, tf.equal(self.labels, ign_label))
+
+            # Collect logits and labels that are not ignored
+            valid_idx = tf.squeeze(tf.where(tf.logical_not(ignored_bool)))
+            valid_logits = tf.gather(self.logits, valid_idx, axis=0)
+            valid_labels_init = tf.gather(self.labels, valid_idx, axis=0)
+
+            # Reduce label values in the range of logit shape
+            reducing_list = tf.range(self.config.num_classes, dtype=tf.int32)
+            inserted_value = tf.zeros((1,), dtype=tf.int32)
+            for ign_label in self.config.ignored_label_inds:
+                reducing_list = tf.concat([reducing_list[:ign_label], inserted_value, reducing_list[ign_label:]], 0)
+            valid_labels = tf.gather(reducing_list, valid_labels_init)
+
+            self.loss5 = self.get_loss(valid_logits, valid_labels, self.class_weights)
+
+            # 此时 self.loss 为 5 个子损失的平均值，不再是单独由 f_out5 预测出来的损失。
+            self.loss = (self.loss1 + self.loss2 + self.loss3 + self.loss4 + self.loss5)/5
+        ####    tp  added<<<    ####
+
+        # with tf.variable_scope('loss'):
+        #     self.logits = tf.reshape(self.logits, [-1, config.num_classes])
+        #     self.labels = tf.reshape(self.labels, [-1])
+
+        #     # Boolean mask of points that should be ignored
+        #     ignored_bool = tf.zeros_like(self.labels, dtype=tf.bool)
+        #     for ign_label in self.config.ignored_label_inds:
+        #         ignored_bool = tf.logical_or(ignored_bool, tf.equal(self.labels, ign_label))
+
+        #     # Collect logits and labels that are not ignored
+        #     valid_idx = tf.squeeze(tf.where(tf.logical_not(ignored_bool)))
+        #     valid_logits = tf.gather(self.logits, valid_idx, axis=0)
+        #     valid_labels_init = tf.gather(self.labels, valid_idx, axis=0)
+
+        #     # Reduce label values in the range of logit shape
+        #     reducing_list = tf.range(self.config.num_classes, dtype=tf.int32)
+        #     inserted_value = tf.zeros((1,), dtype=tf.int32)
+        #     for ign_label in self.config.ignored_label_inds:
+        #         reducing_list = tf.concat([reducing_list[:ign_label], inserted_value, reducing_list[ign_label:]], 0)
+        #     valid_labels = tf.gather(reducing_list, valid_labels_init)
+
+        #     self.loss = self.get_loss(valid_logits, valid_labels, self.class_weights)
 
         with tf.variable_scope('optimizer'):
             self.learning_rate = tf.Variable(config.learning_rate, trainable=False, name='learning_rate')
@@ -228,7 +355,8 @@ class Network:
                 f_decoder_i_55 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_decoder_i_11, f_decoder_i_22, f_decoder_i_33, f_decoder_i_44, f_decoder_list[4]], axis=3), 32, [1, 1],
                                         'decoder_55',
                                         [1, 1], 'VALID', True, is_training)
-        f_layer_fc1 = helper_tf_util.conv2d(f_decoder_i_55 , 64, [1, 1], 'fc1', [1, 1], 'VALID', True, is_training)
+        # 将 f1,1 (f_decoder_i_11) 连接全连接层进行推理，得到推理结果 f_out1
+        f_layer_fc1 = helper_tf_util.conv2d(f_decoder_i_11 , 64, [1, 1], 'fc1', [1, 1], 'VALID', True, is_training)
             ####    tp添加的特征融合模块 over    ####
         # ###########################Decoder############################
 
@@ -237,7 +365,45 @@ class Network:
         f_layer_drop = helper_tf_util.dropout(f_layer_fc2, keep_prob=0.5, is_training=is_training, scope='dp1')
         f_layer_fc3 = helper_tf_util.conv2d(f_layer_drop, self.config.num_classes, [1, 1], 'fc', [1, 1], 'VALID', False,
                                             is_training, activation_fn=None)
-        f_out = tf.squeeze(f_layer_fc3, [2])
+        f_out1 = tf.squeeze(f_layer_fc3, [2])   # tp
+
+        ####    tp add >>>>    ####
+        # 将 f2,2 (f_decoder_i_22) 连接全连接层进行推理，得到推理结果 f_out2
+        f_layer_fc1 = helper_tf_util.conv2d(f_decoder_i_22 , 64, [1, 1], 'fc1-1', [1, 1], 'VALID', True, is_training)
+        f_layer_fc2 = helper_tf_util.conv2d(f_layer_fc1, 32, [1, 1], 'fc2-1', [1, 1], 'VALID', True, is_training)
+        f_layer_drop = helper_tf_util.dropout(f_layer_fc2, keep_prob=0.5, is_training=is_training, scope='dp1')
+        f_layer_fc3 = helper_tf_util.conv2d(f_layer_drop, self.config.num_classes, [1, 1], 'fc-1', [1, 1], 'VALID', False,
+                                            is_training, activation_fn=None)
+        f_out2 = tf.squeeze(f_layer_fc3, [2])
+
+        # 将 f3,3 (f_decoder_i_33) 连接全连接层进行推理，得到推理结果 f_out3
+        f_layer_fc1 = helper_tf_util.conv2d(f_decoder_i_33 , 64, [1, 1], 'fc1-2', [1, 1], 'VALID', True, is_training)
+        f_layer_fc2 = helper_tf_util.conv2d(f_layer_fc1, 32, [1, 1], 'fc2-2', [1, 1], 'VALID', True, is_training)
+        f_layer_drop = helper_tf_util.dropout(f_layer_fc2, keep_prob=0.5, is_training=is_training, scope='dp1')
+        f_layer_fc3 = helper_tf_util.conv2d(f_layer_drop, self.config.num_classes, [1, 1], 'fc-2', [1, 1], 'VALID', False,
+                                            is_training, activation_fn=None)
+        f_out3 = tf.squeeze(f_layer_fc3, [2])
+
+        # 将 f4,4 (f_decoder_i_44) 连接全连接层进行推理，得到推理结果 f_out4
+        f_layer_fc1 = helper_tf_util.conv2d(f_decoder_i_44 , 64, [1, 1], 'fc1-3', [1, 1], 'VALID', True, is_training)
+        f_layer_fc2 = helper_tf_util.conv2d(f_layer_fc1, 32, [1, 1], 'fc2-3', [1, 1], 'VALID', True, is_training)
+        f_layer_drop = helper_tf_util.dropout(f_layer_fc2, keep_prob=0.5, is_training=is_training, scope='dp1')
+        f_layer_fc3 = helper_tf_util.conv2d(f_layer_drop, self.config.num_classes, [1, 1], 'fc-3', [1, 1], 'VALID', False,
+                                            is_training, activation_fn=None)
+        f_out4 = tf.squeeze(f_layer_fc3, [2])
+
+        # 将 f5,5 (f_decoder_i_55) 连接全连接层进行推理，得到推理结果 f_out5
+        f_layer_fc1 = helper_tf_util.conv2d(f_decoder_i_55 , 64, [1, 1], 'fc1-4', [1, 1], 'VALID', True, is_training)
+        f_layer_fc2 = helper_tf_util.conv2d(f_layer_fc1, 32, [1, 1], 'fc2-4', [1, 1], 'VALID', True, is_training)
+        f_layer_drop = helper_tf_util.dropout(f_layer_fc2, keep_prob=0.5, is_training=is_training, scope='dp1')
+        f_layer_fc3 = helper_tf_util.conv2d(f_layer_drop, self.config.num_classes, [1, 1], 'fc-4', [1, 1], 'VALID', False,
+                                            is_training, activation_fn=None)
+        f_out5 = tf.squeeze(f_layer_fc3, [2])
+        # f_out 包含 f1,1 到 f5,5 连接全连接层推理的结果 
+        f_out=[f_out1, f_out2, f_out3, f_out4, f_out5]
+        # f_out = tf.squeeze(f_layer_fc3, [2])  # original
+        ####    tp add <<<<   ####
+
         return f_out
 
     def train(self, dataset):
