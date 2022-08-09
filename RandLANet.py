@@ -134,9 +134,105 @@ class Network:
                                                           is_training=is_training)
             feature = f_decoder_i
             f_decoder_list.append(f_decoder_i)
+
+            ####    tp添加的特征融合模块 start    ####
+            if j == 4:
+                j=4
+                # f_interp_i_11 是由 f1,0 上采样获得的中间特征
+                f_interp_i_11 = self.nearest_interpolation(f_encoder_list[-j-1], inputs['interp_idx'][-j-1])
+                # f_decoder_i_11 是 f1,1 的特征图，由 f0,0 和 f_interp_i_11 特征拼接、卷积而得到
+                f_decoder_i_11 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_interp_i_11], axis=3), 32, [1, 1],
+                                        'decoder_11',
+                                        [1, 1], 'VALID', True, is_training)
+                j=3
+                # f_interp_i_21 是由 f2,0 上采样获得的中间特征
+                f_interp_i_21 = self.nearest_interpolation(f_encoder_list[-j-1], inputs['interp_idx'][-j-1])
+                # f_decoder_i_21 是 f2,1 的特征图，由 f1,0 和 f_interp_i_21 特征拼接、卷积而得到
+                f_decoder_i_21 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_interp_i_21], axis=3), 32, [1, 1],
+                                        'decoder_21',
+                                        [1, 1], 'VALID', True, is_training)
+                j=4
+                # f_interp_i_22 是由 f2,1 上采样获得的中间特征
+                f_interp_i_22 = self.nearest_interpolation(f_decoder_i_21, inputs['interp_idx'][-j-1])
+                # f_decoder_i_22 是 f2,2 的特征图，由 f0,0、f1,1 和 f_interp_i_22 特征拼接、卷积而得到
+                f_decoder_i_22 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_decoder_i_11, f_interp_i_22], axis=3), 32, [1, 1],
+                                        'decoder_22',
+                                        [1, 1], 'VALID', True, is_training)
+                j=2
+                # f_interp_i_31 是由 f3,0 上采样获得的中间特征
+                f_interp_i_31 = self.nearest_interpolation(f_encoder_list[-j-1], inputs['interp_idx'][-j-1])
+                # f_decoder_i_31 是 f3,1 的特征图，由 f2,0 和 f_interp_i_31 特征拼接、卷积而得到
+                f_decoder_i_31 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_interp_i_31], axis=3), 128, [1, 1],
+                                        'decoder_31',
+                                        [1, 1], 'VALID', True, is_training)
+                j=3
+                # f_interp_i_32 是由 f3,1 上采样获得的中间特征
+                f_interp_i_32 = self.nearest_interpolation(f_decoder_i_31, inputs['interp_idx'][-j-1])
+                # f_decoder_i_32 是 f3,2 的特征图，由 f1,0、f2,1 和 f_interp_i_32 特征拼接、卷积而得到
+                f_decoder_i_32 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_decoder_i_21, f_interp_i_32], axis=3), 32, [1, 1],
+                                        'decoder_32',
+                                        [1, 1], 'VALID', True, is_training)
+                j=4
+                # f_interp_i_33 是由 f3,2 上采样获得的中间特征
+                f_interp_i_33 = self.nearest_interpolation(f_decoder_i_32, inputs['interp_idx'][-j-1])
+                # f_decoder_i_33 是 f3,3 的特征图，由 f0,0、f1,1、f2,2 和 f_interp_i_33 特征拼接、卷积而得到
+                f_decoder_i_33 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_decoder_i_11, f_decoder_i_22, f_interp_i_33], axis=3), 32, [1, 1],
+                                        'decoder_33',
+                                        [1, 1], 'VALID', True, is_training)
+                j=1
+                # f_interp_i_41 是由 f4,0 上采样获得的中间特征
+                f_interp_i_41 = self.nearest_interpolation(f_encoder_list[-j-1], inputs['interp_idx'][-j-1])
+                # f_decoder_i_41 是 f4,1 的特征图，由 f3,0 和 f_interp_i_41 特征拼接、卷积而得到
+                f_decoder_i_41 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_interp_i_41], axis=3), 256, [1, 1],
+                                        'decoder_41',
+                                        [1, 1], 'VALID', True, is_training)
+                j=2
+                # f_interp_i_42 是由 f4,1 上采样获得的中间特征
+                f_interp_i_42 = self.nearest_interpolation(f_decoder_i_41, inputs['interp_idx'][-j-1])
+                # f_decoder_i_42 是 f4,2 的特征图，由 f2,0、f3,1 和 f_interp_i_42 特征拼接、卷积而得到
+                f_decoder_i_42 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_decoder_i_31, f_interp_i_42], axis=3), 128, [1, 1],
+                                        'decoder_42',
+                                        [1, 1], 'VALID', True, is_training)
+                j=3
+                # f_interp_i_43 是由 f4,2 上采样获得的中间特征
+                f_interp_i_43 = self.nearest_interpolation(f_decoder_i_42, inputs['interp_idx'][-j-1])
+                # f_decoder_i_43、f1,0、f2,1、f3,2 和 f_interp_i_43 特征拼接、卷积而得到
+                f_decoder_i_43 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_decoder_i_21, f_decoder_i_32, f_interp_i_43], axis=3), 32, [1, 1],
+                                        'decoder_43',
+                                        [1, 1], 'VALID', True, is_training)
+                j=4
+                # f_interp_i_44 是由 f4,3 上采样获得的中间特征
+                f_interp_i_44 = self.nearest_interpolation(f_decoder_i_43, inputs['interp_idx'][-j-1])
+                # f_decoder_i_44 是 f4,4 的特征图，由 f0,0、f1,1、f2,2、f3,3 和 f_interp_i_44 特征拼接、卷积而得到
+                f_decoder_i_44 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_decoder_i_11, f_decoder_i_22, f_decoder_i_33, f_interp_i_44], axis=3), 32, [1, 1],
+                                        'decoder_44',
+                                        [1, 1], 'VALID', True, is_training)
+                j=1
+                # 由于该网络是在原来的特征图基础上进行融合，所以应保持原特征图的特征，不再自己提取f_interp_i_32
+                # f_decoder_i_52 是 f5,2 的特征图，由 f3,0、f4,1 和 f_decoder_list[1] 特征拼接、卷积而得到
+                f_decoder_i_52 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_decoder_i_41, f_decoder_list[1]], axis=3), 256, [1, 1],
+                                        'decoder_52',
+                                        [1, 1], 'VALID', True, is_training)
+                j=2
+                # f_decoder_i_53 是 f5,3 的特征图，由 f2,0、f3,1、f4,2 和 f_decoder_list[2] 特征拼接、卷积而得到
+                f_decoder_i_53 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_decoder_i_31, f_decoder_i_42, f_decoder_list[2]], axis=3), 128, [1, 1],
+                                        'decoder_53',
+                                        [1, 1], 'VALID', True, is_training)
+                j=3
+                # f_decoder_i_54 是 f5,4 的特征图，由 f1,0、f2,1、f3,2、f4,3 和 f_decoder_list[3] 特征拼接、卷积而得到
+                f_decoder_i_54 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_decoder_i_21, f_decoder_i_32, f_decoder_i_43, f_decoder_list[3]], axis=3), 32, [1, 1],
+                                        'decoder_54',
+                                        [1, 1], 'VALID', True, is_training)
+                j=4
+                # f_decoder_i_55 是 f5,5 的特征图，由 f0,0、f1,1、f2,2、f3,3、f4,4 和 f_decoder_list[4] 特征拼接、卷积而得到
+                f_decoder_i_55 = helper_tf_util.conv2d(tf.concat([f_encoder_list[-j-2], f_decoder_i_11, f_decoder_i_22, f_decoder_i_33, f_decoder_i_44, f_decoder_list[4]], axis=3), 32, [1, 1],
+                                        'decoder_55',
+                                        [1, 1], 'VALID', True, is_training)
+        f_layer_fc1 = helper_tf_util.conv2d(f_decoder_i_55 , 64, [1, 1], 'fc1', [1, 1], 'VALID', True, is_training)
+            ####    tp添加的特征融合模块 over    ####
         # ###########################Decoder############################
 
-        f_layer_fc1 = helper_tf_util.conv2d(f_decoder_list[-1], 64, [1, 1], 'fc1', [1, 1], 'VALID', True, is_training)
+        # f_layer_fc1 = helper_tf_util.conv2d(f_decoder_list[-1], 64, [1, 1], 'fc1', [1, 1], 'VALID', True, is_training)
         f_layer_fc2 = helper_tf_util.conv2d(f_layer_fc1, 32, [1, 1], 'fc2', [1, 1], 'VALID', True, is_training)
         f_layer_drop = helper_tf_util.dropout(f_layer_fc2, keep_prob=0.5, is_training=is_training, scope='dp1')
         f_layer_fc3 = helper_tf_util.conv2d(f_layer_drop, self.config.num_classes, [1, 1], 'fc', [1, 1], 'VALID', False,
